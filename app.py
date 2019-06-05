@@ -1,5 +1,5 @@
-from flask import Flask, jsonify, request
-
+from flask import Flask, jsonify, request, Response
+import json
 app = Flask(__name__)
 
 # list of dictionaries containing books
@@ -60,9 +60,19 @@ def add_book():
 		books.insert(0, new_book)
 		# return string becuase Flask automatically sets code to
 		# test/html and status code to 200
-		return 'True'
+		# return 'True'
+		# clearer response to user
+		response = Response('', status=201, mimetype='application/json')
+		response.headers['Location'] = "/books/" + str(new_book['isbn'])
+		return response
 	else:
-		return 'False'
+		# 
+		invalidBookErrorMsg = {
+			'error': "invalid book object was passed in request",
+			'helpString': "Data must be as follows:{'name': 'bookname', 'price': 7.99, isbn: 1234567890"
+		}
+		response = Response(json.dumps(invalidBookErrorMsg), status=400, mimetype='appliation/json')
+		return response
 
 # GET /store
 @app.route('/books')
