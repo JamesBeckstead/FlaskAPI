@@ -37,6 +37,43 @@ def get_book_by_isbn(isbn):
 	# must call jsonify to convert dict to json object
 	return jsonify(return_value)
 
+def valid_put_request_data(put_data):
+	if ('name' in put_data and 'price' in put_data):
+		return True
+	else:
+		return False
+
+#PUT /books/1234567890
+# example
+# {
+# 	'name': name_of_book,
+# 	'price': 0.99
+# }
+@app.route('/books/<int:isbn>', methods=['PUT'])
+def replace_book(isbn):
+	request_data = request.get_json()
+	if (not valid_put_request_data(request_data)):
+		invalidBookErrorMsg = {
+			'error': "Valid book ojbect must be passed to this request",
+			'helpString': "Data should be as follows: {'name': name_of_book, 'price':1.99}"
+		}
+		response = Response(json.dumps(invalidBookErrorMsg), status=400, mimetype='application/json')
+		return response
+	new_book = {
+		'name': request_data['name'],
+		'price': request_data['price'],
+		'isbn': isbn
+	}
+	i = 0
+	for book in books:
+		currentIsbn = book['isbn']
+		if currentIsbn == isbn:
+			books[i] = new_book
+		i += 1
+	response = Response('', status=204)
+	return response
+
+
 # POST /books
 # data should be sent in json as below
 # {
@@ -79,5 +116,21 @@ def add_book():
 def hello_world():
 	# json object to show all books on record
 	return jsonify({'books': books})
+
+#PATCH /books
+@app.route('/books/<int:isbn>', methods=['PATCH'])
+def update_book(isbn):
+	request_data = request.get_json()
+	updated_book = {}
+	if ('name' in request_data):
+		updated_book['name'] = request_data['name']
+	if ('price' in request_data):
+		updated_book['price'] = request_data['price']
+	for book in books:
+		if book['isbn'] == isbn:
+			book.update(updated_book)
+	response = Response('', status=204)
+	response.headers['Location'] = '/books/' + str(isbn)
+	return response
 
 app.run(port=5000)
